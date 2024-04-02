@@ -50,14 +50,6 @@ long currenttime =0;
 
 
 // Declare SK6812 SMART LED object
-//   Argument 1 = Number of LEDs (pixels) in use
-//   Argument 2 = ESP32 pin number 
-//   Argument 3 = Pixel type flags, add together as needed:
-//     NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//     NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-//     NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//     NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-//     NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel SmartLEDs(cSmartLEDCount, cSmartLED, NEO_RGB + NEO_KHZ800);
 
 // Smart LED brightness for heartbeat
@@ -92,11 +84,11 @@ void setup() {
     ledcAttachPin(cServoPin2, cServoChannel2);         // assign servo pin to servo channel
 
 
-  if (tcs.begin()) {
+  if (tcs.begin()) { //check if the colour sesnor works
     Serial.printf("Found TCS34725 colour sensor\n");
     tcsFlag = true;
   } 
-  else {
+  else { //if it doesnt work do this
     Serial.printf("No TCS34725 found ... check your connections\n");
     tcsFlag = false;
   }
@@ -104,10 +96,10 @@ void setup() {
 
 void loop() {
 
-  currenttime = millis();
+  currenttime = millis(); //store current time
 
-  timecount500ms = timecount500ms +1;
-  if (timecount500ms>2){
+  timecount500ms = timecount500ms +1; //time counter and condition for half a second
+  if (timecount500ms>500){
     timeup500ms = true;
     timecount500ms = 0;
   }
@@ -130,10 +122,10 @@ void loop() {
       tcs.getRawData(&r, &g, &b, &c);          
       Serial.printf("R: %d, G: %d, B: %d, C %d\n", r, g, b, c);
       // Check if the green value is above 15
-      if (g > 40 && g < 2000 && c > 160 && c < 200) {        
+      if (g > 40 && g < 2000 && c > 160 && c < 200) {     // if the rgb values allign with that of a gree gem    
         Serial.println("Green Detected.");
-        greenFlag = 1;
-      } else {
+        greenFlag = 1; //flag that its green
+      } else {  //flag its not green if it doesnt allign with the rgb values
         Serial.println("Green not detected");
         greenFlag = 0;
       }
@@ -141,23 +133,23 @@ void loop() {
       colorReadStart = millis();
     }
   }
-  if (greenFlag == 1) {
+  if (greenFlag == 1) { //if it is green 
 
-    if (timeup500ms != true){
-    ledcWrite(cServoChannel, degreesToDutyCycle(80));
-    ledcWrite(cServoChannel2, degreesToDutyCycle(100));
+    if (timeup500ms != true){ //make sure that it is in the resting position if green is the first gem
+    ledcWrite(cServoChannel, degreesToDutyCycle(90));
+    ledcWrite(cServoChannel2, degreesToDutyCycle(90));
     }
-    else{
+    else{ //lift the gate 
     Serial.println("Writing 180 degrees to servo.");
      ledcWrite(cServoChannel, degreesToDutyCycle(180));
     ledcWrite(cServoChannel2, degreesToDutyCycle(0));
     }
 
-  } else {
+  } else { //otherwise keep it in the regular position
     // 149 Degrees was the highest we could go before, it was because of the degreesToDutyCycle function being uncalibrated
     // this degreesToDutyCycle function maps 0-180 degrees to 500-2500 pwm. My (Rolex) lab 2 code maps the degrees
     // to 400-2100 pwm.
-    Serial.println("Writing 0 degrees to servo.");
+    Serial.println("Writing 90 degrees to servo.");
     ledcWrite(cServoChannel, degreesToDutyCycle(90));
     ledcWrite(cServoChannel2, degreesToDutyCycle(90));
   }
